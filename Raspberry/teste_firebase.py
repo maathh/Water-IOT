@@ -48,4 +48,5 @@ while True:
     data = datetime.now()
     jsonTemp['datatime'] =data
     firebase.post('/user/'+user,jsonTemp)
+    print(jsonTemp)
     time.sleep(60)
