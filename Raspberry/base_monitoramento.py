@@ -8,7 +8,7 @@ from datetime import datetime
 from firebase_admin import credentials
 from google.cloud import firestore
 
-idMonitoramento = "1"
+idMonitoramento = "1" 
  
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
