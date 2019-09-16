@@ -1,3 +1,4 @@
+import sys
 import os
 import glob
 import time
@@ -8,8 +9,6 @@ from datetime import datetime
 from firebase_admin import credentials
 from google.cloud import firestore
 
-idMonitoramento = "1" 
- 
 os.system('modprobe w1-gpio')
 os.system('modprobe w1-therm')
 
@@ -25,6 +24,44 @@ firebase_admin.initialize_app(cred, {
   'projectId': project_id,
 })
 db = firestore.Client()
+    
+def generateID():
+    data = datetime.now()
+    sensorBase_ref = db.collection(u'sensorBase').document()
+    sensorBase_ref.set({
+        "registration": data,
+        "location": ""
+    })
+    return sensorBase_ref.id
+    
+def getSensorBase_id():
+    overwrite = False
+    id_sensorBase = 0
+    
+    try:
+        with open('sensorBase.json', 'r') as f:
+            
+            jsonfile = f.read()
+            sensorBase_json = json.loads(jsonfile)
+
+            if sensorBase_json['id_sensorBase'] == False:
+                id_sensorBase = generateID()
+                overwrite = True
+            else:
+                id_sensorBase = sensorBase_json['id_sensorBase']
+                
+    except:
+        id_sensorBase = generateID()
+        overwrite = True
+        
+    if overwrite == True:
+        with open('sensorBase.json', 'w+') as f:   
+            datastore = {"id_sensorBase": id_sensorBase}
+            json.dump(datastore, f)
+        
+    return id_sensorBase
+
+idSensorBase= getSensorBase_id()
 
 def read_temp_raw():
     f = open(device_file, 'r')
@@ -45,20 +82,18 @@ def read_temp():
         
         data = {
             "celsius": temp_c,
-            "fahrenheit": temp_f,
         }
         
         return data
-
-
 
 while True:
 
     jsonTemp = read_temp()
     data = datetime.now()
-    jsonTemp['idBaseMonitoramento'] =idMonitoramento
+    jsonTemp['id_sensorBase'] =idSensorBase
     jsonTemp['datatime'] =data
-    doc_base = db.collection(u'data_sensor')
+
+    doc_base = db.collection(u'sensorBase/'+idSensorBase+"/sensorData")
     doc_base.add(jsonTemp)
     print("Deu Certo!")
     time.sleep(10)
